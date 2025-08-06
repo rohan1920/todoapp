@@ -1,35 +1,30 @@
 import React, { useState, useEffect } from 'react';
-
-interface Todo {
-  _id: string;
-  title: string;
-  completed: boolean;
-}
+import { Todo } from '../services/api';
 
 interface TodoFormProps {
   closeForm: () => void;
-  addTodo: (title: string) => void;
-  updateTodo: (id: string, title: string) => void;
+  addTodo: (text: string) => void;
+  updateTodo: (id: string, text: string) => void;
   editingTodo: Todo | null;
 }
 
 const TodoForm: React.FC<TodoFormProps> = ({ closeForm, addTodo, updateTodo, editingTodo }) => {
-  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
 
   useEffect(() => {
-    setTitle(editingTodo ? editingTodo.title : '');
+    setText(editingTodo ? editingTodo.text : '');
   }, [editingTodo]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      alert('Please enter a todo title');
+    if (!text.trim()) {
+      alert('Please enter a todo text');
       return;
     }
     if (editingTodo) {
-      updateTodo(editingTodo._id, title);
+      updateTodo(editingTodo.id, text);
     } else {
-      addTodo(title);
+      addTodo(text);
     }
     closeForm();
   };
@@ -41,9 +36,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ closeForm, addTodo, updateTodo, edi
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter todo title"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Enter todo text"
             className="w-full p-2 border rounded mb-4"
           />
           <div className="flex justify-end space-x-2">

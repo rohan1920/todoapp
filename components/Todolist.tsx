@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-
-interface Todo {
-  _id: string;
-  title: string;
-  completed: boolean;
-}
+import { Todo } from '../services/api';
 
 interface TodoListProps {
   todos: Todo[];
@@ -24,21 +19,21 @@ const TodoList: React.FC<TodoListProps> = ({ todos, openForm, toggleComplete, de
         ) : (
           todos.map((todo) => (
             <li
-              key={todo._id}
+              key={todo.id}
               className="flex items-center justify-between p-3 bg-gray-600 rounded-lg shadow-sm"
             >
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={todo.completed}
-                  onChange={() => toggleComplete(todo._id)}
+                  onChange={() => toggleComplete(todo.id)}
                   className="mr-2"
                 />
                 <span
                   className={`cursor-pointer ${todo.completed ? 'line-through text-gray-500' : ''}`}
                   onClick={() => openForm(todo)}
                 >
-                  {todo.title}
+                  {todo.text}
                 </span>
               </div>
               <div className="flex space-x-2">
@@ -49,7 +44,7 @@ const TodoList: React.FC<TodoListProps> = ({ todos, openForm, toggleComplete, de
                   Edit
                 </button>
                 <button
-                  onClick={() => setDeleteTodoId(todo._id)}
+                  onClick={() => setDeleteTodoId(todo.id)}
                   className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                 >
                   Delete
