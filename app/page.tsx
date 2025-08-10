@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import TodoList from '../components/Todolist';
 import TodoForm from '../components/TodoFrom';
-import { apiService, Todo } from '../services/api';
+import Notification from '../components/Notification';
+import AuthForm from '../components/AuthForm';
+import GuestTodoLimit from '../components/GuestTodoLimit';
+import { apiService, Todo, User, GuestTodoCount } from '../services/api';
 
 const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -12,11 +15,59 @@ const App: React.FC = () => {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Authentication state
+  const [user, setUser] = useState<User | null>(null);
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
+  const [isAuthFormOpen, setIsAuthFormOpen] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  
+  // Guest todo limit state
+  const [guestTodoCount, setGuestTodoCount] = useState<GuestTodoCount>({
+    count: 0,
+    remaining: 3,
+    limit: 3
+  });
+  
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    isVisible: false,
+  });
 
-  // Load todos on component mount
+  // Load todos and check authentication on component mount
   useEffect(() => {
     loadTodos();
+    loadGuestTodoCount();
+    
+    // Check for saved user in localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        apiService.setUserId(userData.id);
+      } catch (error) {
+        localStorage.removeItem('user');
+      }
+    }
   }, []);
+
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setNotification({
+      message,
+      type,
+      isVisible: true,
+    });
+  };
+
+  const hideNotification = () => {
+    setNotification(prev => ({ ...prev, isVisible: false }));
+  };
 
   const loadTodos = async () => {
     try {
@@ -36,6 +87,19 @@ const App: React.FC = () => {
     }
   };
 
+  const loadGuestTodoCount = async () => {
+    if (!user) {
+      try {
+        const response = await apiService.getGuestTodoCount();
+        if (response.data) {
+          setGuestTodoCount(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to load guest todo count:', err);
+      }
+    }
+  };
+
   const saveTodo = async (text: string, id?: string) => {
     try {
       setError(null);
@@ -45,24 +109,34 @@ const App: React.FC = () => {
         const response = await apiService.updateTodo(id, { text });
         if (response.error) {
           setError(response.error);
+          showNotification('Failed to update todo', 'error');
           return;
         }
         if (response.data) {
           setTodos(todos.map((todo) => (todo.id === id ? response.data! : todo)));
+          showNotification('Todo updated successfully');
         }
       } else {
         // Create new todo
         const response = await apiService.createTodo(text);
         if (response.error) {
           setError(response.error);
+          showNotification('Failed to create todo', 'error');
           return;
         }
         if (response.data) {
           setTodos([...todos, response.data]);
+          showNotification('Todo created successfully');
+          
+          // Update guest todo count if user is not logged in
+          if (!user) {
+            await loadGuestTodoCount();
+          }
         }
       }
     } catch (err) {
       setError('Failed to save todo');
+      showNotification('Failed to save todo', 'error');
     }
   };
 
@@ -73,14 +147,18 @@ const App: React.FC = () => {
       
       if (response.error) {
         setError(response.error);
+        showNotification('Failed to toggle todo', 'error');
         return;
       }
       
       if (response.data) {
         setTodos(todos.map((todo) => (todo.id === id ? response.data! : todo)));
+        const isCompleted = response.data.completed;
+        showNotification(isCompleted ? 'Todo completed!' : 'Todo marked as incomplete');
       }
     } catch (err) {
       setError('Failed to toggle todo');
+      showNotification('Failed to toggle todo', 'error');
     }
   };
 
@@ -91,12 +169,20 @@ const App: React.FC = () => {
       
       if (response.error) {
         setError(response.error);
+        showNotification('Failed to delete todo', 'error');
         return;
       }
       
       setTodos(todos.filter((todo) => todo.id !== id));
+      showNotification('Todo deleted successfully');
+      
+      // Update guest todo count if user is not logged in
+      if (!user) {
+        await loadGuestTodoCount();
+      }
     } catch (err) {
       setError('Failed to delete todo');
+      showNotification('Failed to delete todo', 'error');
     }
   };
 
@@ -110,6 +196,64 @@ const App: React.FC = () => {
     setIsFormOpen(false);
   };
 
+  // Authentication methods
+  const handleRegister = () => {
+    setAuthMode('register');
+    setIsAuthFormOpen(true);
+  };
+
+  const handleAuthSubmit = async (email: string, password: string, name?: string) => {
+    setAuthLoading(true);
+    try {
+      let response;
+      
+      if (authMode === 'register') {
+        if (!name) {
+          showNotification('Name is required for registration', 'error');
+          return;
+        }
+        response = await apiService.registerUser(email, password, name);
+      } else {
+        response = await apiService.loginUser(email, password);
+      }
+
+      if (response.error) {
+        showNotification(response.error, 'error');
+      } else if (response.data) {
+        const userData = response.data;
+        setUser(userData);
+        apiService.setUserId(userData.id);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        showNotification(
+          authMode === 'register' 
+            ? 'Registration successful! Welcome!' 
+            : 'Login successful! Welcome back!'
+        );
+        
+        setIsAuthFormOpen(false);
+        
+        // Reload todos for the authenticated user
+        await loadTodos();
+      }
+    } catch (err) {
+      showNotification('Authentication failed', 'error');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    apiService.setUserId(null);
+    localStorage.removeItem('user');
+    setTodos([]);
+    showNotification('Logged out successfully');
+    
+    // Reload guest todo count
+    loadGuestTodoCount();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -120,27 +264,52 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Header />
+      <Header 
+        user={user} 
+        onRegister={handleRegister} 
+        onLogout={handleLogout} 
+      />
       <main className="container mx-auto p-9">
         {error && (
           <div className="mb-4 p-4 bg-red-500 text-white rounded-lg">
             Error: {error}
           </div>
         )}
+        
+        {/* Show guest todo limit for non-authenticated users */}
+        {!user && (
+          <GuestTodoLimit
+            count={guestTodoCount.count}
+            remaining={guestTodoCount.remaining}
+            limit={guestTodoCount.limit}
+            onRegister={handleRegister}
+          />
+        )}
+        
         <div className="flex justify-center mb-7">
           <button
             onClick={() => openForm()}
-            className="bg-blue-500 text-white p-4 w-180 text-xl font-bold text-center rounded hover:bg-blue-600"
+            disabled={!user && guestTodoCount.remaining === 0}
+            className={`p-4 w-180 text-xl font-bold text-center rounded transition-colors ${
+              !user && guestTodoCount.remaining === 0
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-500 text-white hover:bg-blue-600'
+            }`}
           >
-            Create Todo
+            {!user && guestTodoCount.remaining === 0 
+              ? 'Register to Create More Todos' 
+              : 'Create Todo'
+            }
           </button>
         </div>
+        
         <TodoList
           todos={todos}
           openForm={openForm}
           toggleComplete={toggleComplete}
           deleteTodo={deleteTodo}
         />
+        
         {isFormOpen && (
           <TodoForm
             closeForm={closeForm}
@@ -149,6 +318,22 @@ const App: React.FC = () => {
             editingTodo={editingTodo}
           />
         )}
+        
+        {isAuthFormOpen && (
+          <AuthForm
+            mode={authMode}
+            onSubmit={handleAuthSubmit}
+            onClose={() => setIsAuthFormOpen(false)}
+            loading={authLoading}
+          />
+        )}
+        
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          isVisible={notification.isVisible}
+          onClose={hideNotification}
+        />
       </main>
     </div>
   );

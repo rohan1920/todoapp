@@ -15,6 +15,22 @@ export interface Todo {
   updatedAt?: string;
 }
 
+// User interface
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Guest todo count interface
+export interface GuestTodoCount {
+  count: number;
+  remaining: number;
+  limit: number;
+}
+
 // API Response types
 interface ApiResponse<T> {
   data?: T;
@@ -28,16 +44,31 @@ interface DeleteResponse {
 }
 
 class ApiService {
+  private userId: string | null = null;
+
+  setUserId(userId: string | null) {
+    this.userId = userId;
+  }
+
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (this.userId) {
+      headers['X-User-ID'] = this.userId;
+    }
+    
+    return headers;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers: this.getHeaders(),
         ...options,
       });
 
@@ -106,6 +137,26 @@ class ApiService {
   // Health check
   async healthCheck(): Promise<ApiResponse<any>> {
     return this.request('/health');
+  }
+
+  // User authentication methods
+  async registerUser(email: string, password: string, name: string): Promise<ApiResponse<User>> {
+    return this.request<User>('/user/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    });
+  }
+
+  async loginUser(email: string, password: string): Promise<ApiResponse<User>> {
+    return this.request<User>('/user/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  // Guest todo count
+  async getGuestTodoCount(): Promise<ApiResponse<GuestTodoCount>> {
+    return this.request<GuestTodoCount>('/todos/guest-count');
   }
 }
 
