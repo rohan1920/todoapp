@@ -30,7 +30,7 @@ const TodoList: React.FC<TodoListProps> = ({ todos, openForm, toggleComplete, de
                   className="mr-2"
                 />
                 <span
-                  className={`cursor-pointer ${todo.completed ? 'line-through text-gray-500' : ''}`}
+                  className={`cursor-pointer ${todo.completed ? 'line-through text-green-500' : ''}`}
                   onClick={() => openForm(todo)}
                 >
                   {todo.text}
