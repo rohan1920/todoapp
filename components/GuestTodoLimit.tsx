@@ -5,9 +5,10 @@ interface GuestTodoLimitProps {
   remaining: number;
   limit: number;
   onRegister: () => void;
+  onLogin: () => void;
 }
 
-const GuestTodoLimit: React.FC<GuestTodoLimitProps> = ({ count, remaining, limit, onRegister }) => {
+const GuestTodoLimit: React.FC<GuestTodoLimitProps> = ({ count, remaining, limit, onRegister, onLogin }) => {
   const isAtLimit = remaining === 0;
 
   return (
@@ -34,12 +35,20 @@ const GuestTodoLimit: React.FC<GuestTodoLimitProps> = ({ count, remaining, limit
           <div className="text-sm text-yellow-700 mb-2">
             {count}/{limit} todos used
           </div>
-          <button
-            onClick={onRegister}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
-          >
-            {isAtLimit ? 'Register Now' : 'Register for Unlimited'}
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={onLogin}
+              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold"
+            >
+              Login
+            </button>
+            <button
+              onClick={onRegister}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
+            >
+              {isAtLimit ? 'Register Now' : 'Register'}
+            </button>
+          </div>
         </div>
       </div>
       

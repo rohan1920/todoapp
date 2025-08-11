@@ -5,10 +5,11 @@ import UserProfile from './UserProfile';
 interface HeaderProps {
   user: User | null;
   onRegister: () => void;
+  onLogin: () => void;
   onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogin, onLogout }) => {
   return (
     <header className='bg-black text-white p-12 shadow-md'>
       <div className='container mx-auto flex justify-between items-center'>
@@ -18,12 +19,20 @@ const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogout }) => {
           {user ? (
             <UserProfile user={user} onLogout={onLogout} />
           ) : (
-            <button
-              onClick={onRegister}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-semibold"
-            >
-              Register
-            </button>
+            <>
+              <button
+                onClick={onLogin}
+                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors font-semibold"
+              >
+                Login
+              </button>
+              <button
+                onClick={onRegister}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+              >
+                Register
+              </button>
+            </>
           )}
         </div>
       </div>

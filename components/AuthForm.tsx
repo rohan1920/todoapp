@@ -4,10 +4,11 @@ interface AuthFormProps {
   mode: 'register' | 'login';
   onSubmit: (email: string, password: string, name?: string) => void;
   onClose: () => void;
+  onModeChange: (mode: 'register' | 'login') => void;
   loading?: boolean;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ mode, onSubmit, onClose, loading = false }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ mode, onSubmit, onClose, onModeChange, loading = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -19,6 +20,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSubmit, onClose, loading = 
     } else {
       onSubmit(email, password);
     }
+  };
+
+  const handleModeChange = (newMode: 'register' | 'login') => {
+    // Clear form fields when switching modes
+    setEmail('');
+    setPassword('');
+    setName('');
+    onModeChange(newMode);
   };
 
   return (
@@ -95,7 +104,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSubmit, onClose, loading = 
             <p>
               Already have an account?{' '}
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => handleModeChange('login')}
                 className="text-blue-500 hover:text-blue-600"
               >
                 Login here
@@ -105,7 +114,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSubmit, onClose, loading = 
             <p>
               Don't have an account?{' '}
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => handleModeChange('register')}
                 className="text-blue-500 hover:text-blue-600"
               >
                 Register here

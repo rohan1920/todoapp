@@ -78,6 +78,16 @@ class ApiService {
         return { error: data.error || 'Request failed' };
       }
 
+      // Handle backend response structure: {success: true, data: {...}}
+      if (data.success && data.data) {
+        return { data: data.data };
+      }
+      
+      // Handle direct data response
+      if (data.data) {
+        return { data: data.data };
+      }
+
       return { data };
     } catch (error) {
       return { error: 'Network error' };
@@ -161,4 +171,4 @@ class ApiService {
 }
 
 // Export singleton instance
-export const apiService = new ApiService(); 
+export const apiService = new ApiService();

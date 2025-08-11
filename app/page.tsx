@@ -9,7 +9,7 @@ import AuthForm from '../components/AuthForm';
 import GuestTodoLimit from '../components/GuestTodoLimit';
 import { apiService, Todo, User, GuestTodoCount } from '../services/api';
 
-const App: React.FC = () => {
+const Home: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -202,6 +202,15 @@ const App: React.FC = () => {
     setIsAuthFormOpen(true);
   };
 
+  const handleLogin = () => {
+    setAuthMode('login');
+    setIsAuthFormOpen(true);
+  };
+
+  const handleAuthModeChange = (mode: 'register' | 'login') => {
+    setAuthMode(mode);
+  };
+
   const handleAuthSubmit = async (email: string, password: string, name?: string) => {
     setAuthLoading(true);
     try {
@@ -268,6 +277,7 @@ const App: React.FC = () => {
         user={user} 
         onRegister={handleRegister} 
         onLogout={handleLogout} 
+        onLogin={handleLogin}
       />
       <main className="container mx-auto p-9">
         {error && (
@@ -283,24 +293,34 @@ const App: React.FC = () => {
             remaining={guestTodoCount.remaining}
             limit={guestTodoCount.limit}
             onRegister={handleRegister}
+            onLogin={handleLogin}
           />
         )}
         
-        <div className="flex justify-center mb-7">
-          <button
-            onClick={() => openForm()}
-            disabled={!user && guestTodoCount.remaining === 0}
-            className={`p-4 w-180 text-xl font-bold text-center rounded transition-colors ${
-              !user && guestTodoCount.remaining === 0
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-          >
-            {!user && guestTodoCount.remaining === 0 
-              ? 'Register to Create More Todos' 
-              : 'Create Todo'
-            }
-          </button>
+        <div className="flex justify-center mb-7 space-x-4">
+          {!user && guestTodoCount.remaining === 0 ? (
+            <>
+              <button
+                onClick={handleLogin}
+                className="p-4 w-180 text-xl font-bold text-center rounded transition-colors bg-green-500 text-white hover:bg-green-600"
+              >
+                Login to Create Todos
+              </button>
+              <button
+                onClick={handleRegister}
+                className="p-4 w-180 text-xl font-bold text-center rounded transition-colors bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Register to Create Todos
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => openForm()}
+              className="p-4 w-180 text-xl font-bold text-center rounded transition-colors bg-blue-500 text-white hover:bg-blue-600"
+            >
+              Create Todo
+            </button>
+          )}
         </div>
         
         <TodoList
@@ -325,6 +345,7 @@ const App: React.FC = () => {
             onSubmit={handleAuthSubmit}
             onClose={() => setIsAuthFormOpen(false)}
             loading={authLoading}
+            onModeChange={handleAuthModeChange}
           />
         )}
         
@@ -339,4 +360,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default  Home;
