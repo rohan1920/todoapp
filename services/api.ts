@@ -20,6 +20,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  is_admin?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -167,6 +168,52 @@ class ApiService {
   // Guest todo count
   async getGuestTodoCount(): Promise<ApiResponse<GuestTodoCount>> {
     return this.request<GuestTodoCount>('/todos/guest-count');
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<ApiResponse<User[]>> {
+    return this.request<User[]>('/user/admin/users', {
+      headers: {
+        ...this.getHeaders(),
+        'User-ID': this.userId || '',
+      },
+    });
+  }
+
+  async deleteUser(userId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/user/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        ...this.getHeaders(),
+        'User-ID': this.userId || '',
+      },
+    });
+  }
+
+  async checkAdminStatus(): Promise<ApiResponse<{ is_admin: boolean }>> {
+    return this.request<{ is_admin: boolean }>('/user/admin/check', {
+      headers: {
+        ...this.getHeaders(),
+        'User-ID': this.userId || '',
+      },
+    });
+  }
+
+  async createAdminUser(email: string, password: string, name: string): Promise<ApiResponse<User>> {
+    return this.request<User>('/user/admin/create', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    });
+  }
+
+  async toggleAdminStatus(userId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/user/admin/users/${userId}/toggle-admin`, {
+      method: 'PATCH',
+      headers: {
+        ...this.getHeaders(),
+        'User-ID': this.userId || '',
+      },
+    });
   }
 }
 

@@ -7,6 +7,7 @@ import TodoForm from '../components/TodoFrom';
 import Notification from '../components/Notification';
 import AuthForm from '../components/AuthForm';
 import GuestTodoLimit from '../components/GuestTodoLimit';
+import AdminPage from '../components/AdminPage';
 import { apiService, Todo, User, GuestTodoCount } from '../services/api';
 
 const Home: React.FC = () => {
@@ -21,6 +22,9 @@ const Home: React.FC = () => {
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
   const [isAuthFormOpen, setIsAuthFormOpen] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  
+  // Admin state
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   
   // Guest todo limit state
   const [guestTodoCount, setGuestTodoCount] = useState<GuestTodoCount>({
@@ -257,10 +261,19 @@ const Home: React.FC = () => {
     apiService.setUserId(null);
     localStorage.removeItem('user');
     setTodos([]);
+    setIsAdminPanelOpen(false);
     showNotification('Logged out successfully');
     
     // Reload guest todo count
     loadGuestTodoCount();
+  };
+
+  const handleAdminClick = () => {
+    setIsAdminPanelOpen(true);
+  };
+
+  const handleAdminClose = () => {
+    setIsAdminPanelOpen(false);
   };
 
   if (loading) {
@@ -278,6 +291,7 @@ const Home: React.FC = () => {
         onRegister={handleRegister} 
         onLogout={handleLogout} 
         onLogin={handleLogin}
+        onAdminClick={handleAdminClick}
       />
       <main className="container mx-auto p-9">
         {error && (
@@ -347,6 +361,10 @@ const Home: React.FC = () => {
             loading={authLoading}
             onModeChange={handleAuthModeChange}
           />
+        )}
+
+        {isAdminPanelOpen && (
+          <AdminPage onClose={handleAdminClose} />
         )}
         
         <Notification

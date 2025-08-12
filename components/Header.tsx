@@ -7,9 +7,10 @@ interface HeaderProps {
   onRegister: () => void;
   onLogin: () => void;
   onLogout: () => void;
+  onAdminClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogin, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogin, onLogout, onAdminClick }) => {
   return (
     <header className='bg-black text-white p-12 shadow-md'>
       <div className='container mx-auto flex justify-between items-center'>
@@ -17,7 +18,17 @@ const Header: React.FC<HeaderProps> = ({ user, onRegister, onLogin, onLogout }) 
         
         <div className="flex items-center space-x-4">
           {user ? (
-            <UserProfile user={user} onLogout={onLogout} />
+            <>
+              {user.is_admin && onAdminClick && (
+                <button
+                  onClick={onAdminClick}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors font-semibold"
+                >
+                  Admin Panel
+                </button>
+              )}
+              <UserProfile user={user} onLogout={onLogout} />
+            </>
           ) : (
             <>
               <button
